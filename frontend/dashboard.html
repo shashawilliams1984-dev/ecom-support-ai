@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Support AI Dashboard</title>
+<style>
+body {
+    font-family: Arial;
+    margin: 40px;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th, td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: left;
+}
+
+th {
+    background: #f2f2f2;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Support AI Dashboard</h1>
+
+<table id="history">
+<thead>
+<tr>
+<th>Order</th>
+<th>Intent</th>
+<th>Status</th>
+<th>Decision</th>
+<th>Needs Human</th>
+</tr>
+</thead>
+
+<tbody>
+</tbody>
+
+</table>
+
+<script>
+
+async function loadHistory() {
+
+const res = await fetch("http://127.0.0.1:8000/history")
+const data = await res.json()
+
+const table = document.querySelector("#history tbody")
+
+data.logs.forEach(log => {
+
+const row = `
+<tr>
+<td>${log.order_number}</td>
+<td>${log.intent}</td>
+<td>${log.order_status}</td>
+<td>${log.decision}</td>
+<td>${log.needs_human}</td>
+</tr>
+`
+
+table.innerHTML += row
+
+})
+
+}
+
+loadHistory()
+
+</script>
+<script>
+
+async function loadHistory() {
+
+    const response = await fetch("http://127.0.0.1:8000/history");
+    const data = await response.json();
+
+    const table = document.getElementById("history");
+
+    data.forEach(ticket => {
+
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+        <td>${ticket.order_number}</td>
+        <td>${ticket.intent}</td>
+        <td>${ticket.order_status}</td>
+        <td>${ticket.decision}</td>
+        <td>${ticket.needs_human}</td>
+        `;
+
+        table.appendChild(row);
+
+    });
+
+}
+
+loadHistory();
+
+</script>
+</body>
+</html>
+
+>

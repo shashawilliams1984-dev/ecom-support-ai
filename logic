@@ -1,0 +1,75 @@
+import re
+from mock_data import orders
+
+
+def extract_order_number(text: str):
+    match = re.search(r"\b\d{4,}\b", text)
+    if match:
+        return match.group(0)
+    return None
+
+
+def get_order(order_number: str):
+    return orders.get(order_number)
+
+
+def handle_order_question(question: str):
+    order_number = extract_order_number(question)
+
+    if not order_number:
+        return {"answer": "Please provide your order number."}
+
+    order = get_order(order_number)
+
+    if not order:
+        return {"answer": f"I could not find order {order_number}."}
+
+    status = order["status"]
+    tracking = order["tracking"]
+
+    if tracking:
+        return {"answer": f"Order {order_number} is {status}. Tracking: {tracking}."}
+    else:
+        return {"answer": f"Order {order_number} is {status}. No tracking number is available yet."}
+
+
+def handle_refund_question(question: str):
+    order_number = extract_order_number(question)
+
+    if not order_number:
+        return {"answer": "Please provide your order number for the refund request."}
+
+    order = get_order(order_number)
+
+    if not order:
+        return {"answer": f"I could not find order {order_number}."}
+
+    status = order["status"]
+
+    if status == "processing":
+        return {
+            "answer": f"Order {order_number} is still processing. Your refund request can be reviewed."
+        }
+
+    if status == "shipped":
+        return {
+            "answer": f"Order {order_number} has already shipped. Refunds for shipped orders require review after delivery or support approval."
+        }
+
+    return {
+        "answer": f"Refund status for order {order_number} requires manual review."
+    }
+
+
+def handle_question(question: str):
+    question_lower = question.lower()
+
+    if "refund" in question_lower:
+        return handle_refund_question(question)
+
+    if "order" in question_lower:
+        return handle_order_question(question)
+
+    return {
+        "answer": "I can help with order tracking and refund requests. Please include your order number."
+    }

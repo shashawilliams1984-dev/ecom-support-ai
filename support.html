@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Shopify AI Support</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial;
+      background: #0f172a;
+      color: white;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 40px;
+    }
+
+    .hero h1 {
+      font-size: 28px;
+    }
+
+    .hero p {
+      color: #94a3b8;
+    }
+
+    .start-btn {
+      margin-top: 20px;
+      padding: 12px 20px;
+      background: #22c55e;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .chat-container {
+      display: none;
+      max-width: 500px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .chat {
+      height: 300px;
+      overflow-y: auto;
+      background: #020617;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+
+    input {
+      width: 80%;
+      padding: 10px;
+    }
+
+    button {
+      padding: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="hero" id="hero">
+  <h1>🛍️ Shopify AI Support</h1>
+  <p>Automate customer support. Save time. Scale faster.</p>
+  <button class="start-btn" onclick="startChat()">Start Chat</button>
+</div>
+
+<div class="chat-container" id="chatUI">
+  <div id="chat" class="chat"></div>
+
+  <input id="input" placeholder="Ask something..." />
+  <button onclick="send()">Send</button>
+</div>
+
+<script>
+let session_id = null;
+
+function startChat() {
+  document.getElementById("hero").style.display = "none";
+  document.getElementById("chatUI").style.display = "block";
+}
+
+function addMessage(sender, text) {
+  const chat = document.getElementById("chat");
+  chat.innerHTML += `<p><b>${sender}:</b> ${text}</p>`;
+}
+
+async function send() {
+  const input = document.getElementById("input");
+  const msg = input.value;
+
+  addMessage("You", msg);
+  input.value = "";
+
+  const res = await fetch("http://127.0.0.1:8002/ask", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      question: msg,
+      session_id: session_id
+    })
+  });
+
+  const data = await res.json();
+
+  session_id = data.session_id;
+
+  addMessage("AI", data.answer);
+}
+</script>
+
+</body>
+</html>
