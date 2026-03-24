@@ -5,15 +5,18 @@ app = FastAPI()
 
 
 # =========================
-# ROOT (THIS FIXES YOUR ISSUE)
+# ROOT (fixes "Not Found")
 # =========================
 @app.get("/")
 def home():
-    return {"message": "AI Support Agent is LIVE"}
+    return {
+        "status": "AI Support Agent is running",
+        "message": "Backend is live on Render"
+    }
 
 
 # =========================
-# HEALTH CHECK (Render uses this)
+# HEALTH CHECK
 # =========================
 @app.get("/health")
 def health():
@@ -21,41 +24,29 @@ def health():
 
 
 # =========================
-# TEST ROUTE
-# =========================
-@app.get("/test")
-def test():
-    return {"status": "working"}
-
-
-# =========================
-# SMART AI ENDPOINT (basic placeholder)
+# AI ENDPOINT (basic)
 # =========================
 @app.post("/ai")
-async def ai_handler(request: Request):
+async def ai_endpoint(request: Request):
     data = await request.json()
-    
-    user_message = data.get("message", "")
+    message = data.get("message", "")
 
-    # Simple logic (replace later with OpenAI)
-    if "order" in user_message.lower():
-        response = "Let me check your order status for you."
-    elif "refund" in user_message.lower():
-        response = "I can help you with a refund. Can you provide your order ID?"
-    else:
-        response = "I'm your AI support agent. How can I assist you today?"
+    # Simple logic (placeholder for real AI later)
+    if not message:
+        return JSONResponse({
+            "error": "No message provided"
+        })
 
-    return JSONResponse(content={
-        "user_message": user_message,
-        "response": response
+    return JSONResponse({
+        "response": f"AI received: {message}"
     })
 
 
 # =========================
-# OPTIONAL: SHOPIFY WEBHOOK (future use)
+# SHOPIFY TEST ENDPOINT
 # =========================
-@app.post("/webhook")
-async def webhook_handler(request: Request):
-    payload = await request.json()
-    print("Webhook received:", payload)
-    return {"status": "received"}
+@app.get("/shopify")
+def shopify_test():
+    return {
+        "status": "Shopify connection endpoint ready"
+    }
