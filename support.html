@@ -1,117 +1,152 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Shopify AI Support</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial;
-      background: #0f172a;
-      color: white;
-    }
+    <meta charset="UTF-8">
+    <title>Shopify AI Support</title>
 
-    .hero {
-      text-align: center;
-      padding: 40px;
-    }
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
 
-    .hero h1 {
-      font-size: 28px;
-    }
+        .chat-container {
+            width: 400px;
+            height: 500px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            color: white;
+        }
 
-    .hero p {
-      color: #94a3b8;
-    }
+        .chat-box {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
 
-    .start-btn {
-      margin-top: 20px;
-      padding: 12px 20px;
-      background: #22c55e;
-      border: none;
-      border-radius: 5px;
-      font-weight: bold;
-      cursor: pointer;
-    }
+        .message {
+            margin: 5px 0;
+        }
 
-    .chat-container {
-      display: none;
-      max-width: 500px;
-      margin: auto;
-      padding: 20px;
-    }
+        .user {
+            color: #00ff88;
+        }
 
-    .chat {
-      height: 300px;
-      overflow-y: auto;
-      background: #020617;
-      padding: 10px;
-      border-radius: 6px;
-      margin-bottom: 10px;
-    }
+        .ai {
+            color: #66ccff;
+        }
 
-    input {
-      width: 80%;
-      padding: 10px;
-    }
+        .input-area {
+            display: flex;
+        }
 
-    button {
-      padding: 10px;
-    }
-  </style>
+        input {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 10px;
+            margin-left: 5px;
+            background: #00cc66;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+        }
+
+        h2 {
+            text-align: center;
+        }
+    </style>
 </head>
 
 <body>
 
-<div class="hero" id="hero">
-  <h1>🛍️ Shopify AI Support</h1>
-  <p>Automate customer support. Save time. Scale faster.</p>
-  <button class="start-btn" onclick="startChat()">Start Chat</button>
-</div>
+<div class="chat-container">
+    <h2>🛒 Shopify AI Support</h2>
 
-<div class="chat-container" id="chatUI">
-  <div id="chat" class="chat"></div>
+    <div id="chatBox" class="chat-box"></div>
 
-  <input id="input" placeholder="Ask something..." />
-  <button onclick="send()">Send</button>
+    <div class="input-area">
+        <input id="userInput" placeholder="Ask something..." />
+        <button onclick="sendMessage()">Send</button>
+    </div>
 </div>
 
 <script>
-let session_id = null;
+    let userId = localStorage.getItem("user_id");
 
-function startChat() {
-  document.getElementById("hero").style.display = "none";
-  document.getElementById("chatUI").style.display = "block";
-}
+    function addMessage(sender, text) {
+        const chatBox = document.getElementById("chatBox");
 
-function addMessage(sender, text) {
-  const chat = document.getElementById("chat");
-  chat.innerHTML += `<p><b>${sender}:</b> ${text}</p>`;
-}
+        const msg = document.createElement("div");
+        msg.classList.add("message");
 
-async function send() {
-  const input = document.getElementById("input");
-  const msg = input.value;
+        if (sender === "You") {
+            msg.classList.add("user");
+            msg.innerHTML = "<strong>You:</strong> " + text;
+        } else {
+            msg.classList.add("ai");
+            msg.innerHTML = "<strong>AI:</strong> " + text;
+        }
 
-  addMessage("You", msg);
-  input.value = "";
+        chatBox.appendChild(msg);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
 
-  const res = await fetch("http://127.0.0.1:8002/ask", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      question: msg,
-      session_id: session_id
-    })
-  });
+    async function sendMessage() {
+        const input = document.getElementById("userInput");
+        const message = input.value;
 
-  const data = await res.json();
+        if (!message) return;
 
-  session_id = data.session_id;
+        addMessage("You", message);
+        input.value = "";
 
-  addMessage("AI", data.answer);
-}
+        try {
+            const response = await fetch("http://127.0.0.1:8000/chat", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    message: message,
+                    user_id: userId
+                })
+            });
+
+            const data = await response.json();
+
+            // Save user_id if first time
+            if (!userId) {
+                userId = data.user_id;
+                localStorage.setItem("user_id", userId);
+            }
+
+            addMessage("AI", data.response);
+
+        } catch (error) {
+            addMessage("AI", "Error connecting to server");
+        }
+    }
+
+    // Optional: press Enter to send
+    document.getElementById("userInput").addEventListener("keypress", function(e) {
+        if (e.key === "Enter") {
+            sendMessage();
+        }
+    });
 </script>
 
 </body>
