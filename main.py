@@ -5,7 +5,6 @@ import os
 
 app = FastAPI()
 
-# Initialize OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # =========================
@@ -16,15 +15,15 @@ class AIRequest(BaseModel):
 
 
 # =========================
-# ROOT ENDPOINT
+# ROOT
 # =========================
 @app.get("/")
 def home():
-    return {"status": "AI Support API is running"}
+    return {"status": "AI Support API running"}
 
 
 # =========================
-# HEALTH CHECK
+# HEALTH
 # =========================
 @app.get("/health")
 def health():
@@ -32,48 +31,64 @@ def health():
 
 
 # =========================
-# SHOPIFY TEST ENDPOINT
+# SHOPIFY TEST
 # =========================
 @app.get("/shopify")
 def shopify_test():
-    return {"message": "Shopify connection endpoint ready"}
+    return {"message": "Shopify endpoint ready"}
 
 
 # =========================
-# AI ENDPOINT (CORE ENGINE)
+# AI CORE
 # =========================
 @app.post("/ai")
 def ai_endpoint(request: AIRequest):
-    user_message = request.message
+    user_message = request.message.lower()
 
     try:
+        # =========================
+        # SMART RULE LAYER
+        # =========================
+
+        if "refund" in user_message:
+            return {
+                "response": "I can help with that. Share your order number or purchase email so I can check your refund eligibility."
+            }
+
+        if "late" in user_message or "delayed" in user_message:
+            return {
+                "response": "Got it. Send your order number or email and I’ll check the latest delivery status right away."
+            }
+
+        if "where is my order" in user_message or "track" in user_message:
+            return {
+                "response": "I can track that for you. Provide your order number or the email used at checkout."
+            }
+
+        if "international" in user_message or "ship" in user_message:
+            return {
+                "response": "Yes, we ship internationally. Share your location and I’ll give you delivery time and cost."
+            }
+
+        # =========================
+        # AI LAYER (ADVANCED TONE)
+        # =========================
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {
                     "role": "system",
                     "content": (
-                        "You are a high-performance AI customer support agent for a Shopify store. "
-                        "You handle order tracking, refunds, shipping issues, and product questions. "
+                        "You are a top-tier customer support agent for a premium Shopify store. "
+                        "Be sharp, direct, and helpful. Maximum 2 sentences. "
 
                         "RULES: "
-                        "- Always be concise (max 2 sentences unless necessary). "
-                        "- Sound like a real human support agent, not AI. "
-                        "- Be confident, clear, and direct. "
-                        "- Never ramble or over-explain. "
+                        "- No fluff. No generic replies. "
+                        "- Always guide the user to the next step. "
+                        "- Speak with confidence like a real human agent. "
 
-                        "ORDER HANDLING: "
-                        "- If a customer asks about an order and gives NO details, ask for order number or email. "
-                        "- If they provide details, respond as if you can access the order system. "
-                        "- Give helpful next steps, not generic advice. "
-
-                        "REFUNDS: "
-                        "- Be calm and professional. "
-                        "- Explain the process briefly and clearly. "
-
-                        "TONE: "
-                        "- Professional, helpful, slightly assertive. "
-                        "- No fluff. No filler. No 'as an AI'. "
+                        "GOAL: "
+                        "Resolve the user's issue quickly and clearly."
                     )
                 },
                 {
@@ -81,8 +96,8 @@ def ai_endpoint(request: AIRequest):
                     "content": user_message
                 }
             ],
-            temperature=0.7,
-            max_tokens=200,
+            temperature=0.6,
+            max_tokens=150,
         )
 
         ai_reply = response.choices[0].message.content.strip()
