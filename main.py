@@ -1,18 +1,16 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
+from pydantic import BaseModel
 from fastapi.responses import JSONResponse
 
 app = FastAPI()
 
 
 # =========================
-# ROOT (fixes "Not Found")
+# ROOT
 # =========================
 @app.get("/")
 def home():
-    return {
-        "status": "AI Support Agent is running",
-        "message": "Backend is live on Render"
-    }
+    return {"message": "AI Support Agent is LIVE"}
 
 
 # =========================
@@ -24,14 +22,19 @@ def health():
 
 
 # =========================
-# AI ENDPOINT (basic)
+# AI REQUEST MODEL
+# =========================
+class AIRequest(BaseModel):
+    message: str
+
+
+# =========================
+# AI ENDPOINT
 # =========================
 @app.post("/ai")
-async def ai_endpoint(request: Request):
-    data = await request.json()
-    message = data.get("message", "")
+def ai_endpoint(request: AIRequest):
+    message = request.message
 
-    # Simple logic (placeholder for real AI later)
     if not message:
         return JSONResponse({
             "error": "No message provided"
