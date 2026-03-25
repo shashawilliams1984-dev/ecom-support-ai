@@ -1,12 +1,22 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 from openai import OpenAI
 import os
 
 app = FastAPI()
 
-# Initialize OpenAI client
+# =========================
+# OPENAI CLIENT
+# =========================
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+
+# =========================
+# REQUEST MODEL (IMPORTANT)
+# =========================
+class AIRequest(BaseModel):
+    message: str
 
 
 # =========================
@@ -26,11 +36,11 @@ def health():
 
 
 # =========================
-# AI ENDPOINT (CLEAN VERSION)
+# AI ENDPOINT (CLEAN + CONTROLLED)
 # =========================
 @app.post("/ai")
-async def ai_endpoint(data: dict):
-    message = data.get("message")
+async def ai_endpoint(data: AIRequest):
+    message = data.message
 
     if not message:
         return JSONResponse({
