@@ -1,9 +1,18 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.responses import JSONResponse
+import os
+from openai import OpenAI
 
+# =========================
+# INIT APP
+# =========================
 app = FastAPI()
 
+# =========================
+# OPENAI SETUP
+# =========================
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # =========================
 # ROOT
@@ -12,7 +21,6 @@ app = FastAPI()
 def home():
     return {"message": "AI Support Agent is LIVE"}
 
-
 # =========================
 # HEALTH CHECK
 # =========================
@@ -20,16 +28,14 @@ def home():
 def health():
     return {"status": "ok"}
 
-
 # =========================
-# AI REQUEST MODEL
+# REQUEST MODEL
 # =========================
 class AIRequest(BaseModel):
     message: str
 
-
 # =========================
-# AI ENDPOINT
+# AI ENDPOINT (REAL AI)
 # =========================
 @app.post("/ai")
 def ai_endpoint(request: AIRequest):
@@ -40,10 +46,31 @@ def ai_endpoint(request: AIRequest):
             "error": "No message provided"
         })
 
-    return JSONResponse({
-        "response": f"AI received: {message}"
-    })
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a helpful Shopify customer support assistant. Answer clearly and professionally."
+                },
+                {
+                    "role": "user",
+                    "content": message
+                }
+            ]
+        )
 
+        reply = response.choices[0].message.content
+
+        return {
+            "response": reply
+        }
+
+    except Exception as e:
+        return {
+            "error": str(e)
+        }
 
 # =========================
 # SHOPIFY TEST ENDPOINT
