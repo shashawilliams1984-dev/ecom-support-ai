@@ -1,30 +1,26 @@
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from openai import OpenAI
 import os
 
 app = FastAPI()
 
-# =========================
-# OPENAI CLIENT
-# =========================
+# Initialize OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-
 # =========================
-# REQUEST MODEL (IMPORTANT)
+# REQUEST MODEL
 # =========================
 class AIRequest(BaseModel):
     message: str
 
 
 # =========================
-# ROOT
+# ROOT ENDPOINT
 # =========================
 @app.get("/")
 def home():
-    return {"message": "Ecom Support AI is running"}
+    return {"status": "AI Support API is running"}
 
 
 # =========================
@@ -36,54 +32,62 @@ def health():
 
 
 # =========================
-# AI ENDPOINT (CLEAN + CONTROLLED)
+# SHOPIFY TEST ENDPOINT
+# =========================
+@app.get("/shopify")
+def shopify_test():
+    return {"message": "Shopify connection endpoint ready"}
+
+
+# =========================
+# AI ENDPOINT (CORE ENGINE)
 # =========================
 @app.post("/ai")
-async def ai_endpoint(data: AIRequest):
-    message = data.message
-
-    if not message:
-        return JSONResponse({
-            "error": "No message provided"
-        })
+def ai_endpoint(request: AIRequest):
+    user_message = request.message
 
     try:
-        completion = client.chat.completions.create(
+        response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {
                     "role": "system",
                     "content": (
-                        "You are a Shopify customer support assistant. "
-                        "Be concise, clear, and helpful. "
-                        "Give short answers (maximum 2-3 sentences). "
-                        "If order details are missing, ask for order number or email. "
-                        "Do not give long explanations. "
-                        "Respond like a professional support agent."
+                        "You are a high-performance AI customer support agent for a Shopify store. "
+                        "You handle order tracking, refunds, shipping issues, and product questions. "
+
+                        "RULES: "
+                        "- Always be concise (max 2 sentences unless necessary). "
+                        "- Sound like a real human support agent, not AI. "
+                        "- Be confident, clear, and direct. "
+                        "- Never ramble or over-explain. "
+
+                        "ORDER HANDLING: "
+                        "- If a customer asks about an order and gives NO details, ask for order number or email. "
+                        "- If they provide details, respond as if you can access the order system. "
+                        "- Give helpful next steps, not generic advice. "
+
+                        "REFUNDS: "
+                        "- Be calm and professional. "
+                        "- Explain the process briefly and clearly. "
+
+                        "TONE: "
+                        "- Professional, helpful, slightly assertive. "
+                        "- No fluff. No filler. No 'as an AI'. "
                     )
                 },
                 {
                     "role": "user",
-                    "content": message
+                    "content": user_message
                 }
-            ]
+            ],
+            temperature=0.7,
+            max_tokens=200,
         )
 
-        return {
-            "response": completion.choices[0].message.content
-        }
+        ai_reply = response.choices[0].message.content.strip()
+
+        return {"response": ai_reply}
 
     except Exception as e:
-        return JSONResponse({
-            "error": str(e)
-        })
-
-
-# =========================
-# SHOPIFY TEST ENDPOINT
-# =========================
-@app.get("/shopify")
-def shopify_test():
-    return {
-        "status": "Shopify connection endpoint ready"
-    }
+        return {"error": str(e)}
